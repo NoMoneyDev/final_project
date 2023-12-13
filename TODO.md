@@ -5,15 +5,15 @@
 ---
 ### **Lead Student**
 - [ ] Create a project
-  - _class_ **Project** :
+  - _csv_ **Project** :
     - _project name_
-    - _member list_ `['lead_std_id', 'member_id']`
+    - _lead student_
+    - _member1_
+    - _member2_
     - _status : (Approved / Declined / Waiting)_
-    - _vote_status = Dictionary of voters_id and True / False depending on if the voter approves or not_
+    - _vote_status_ = number starting from 0, then adds up everytime when advisor votes approves
     - _project details_
-    - _work space_ : Dictionary {work_name : strings}
-      - e.g.```{ 'Python' : 'print(Hello world)', 'JS' : 'console.log(Hello_world)' }```
-  
+    
 - [ ] Find _members_
   - Send invitation message to **Member's student** id
 

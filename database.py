@@ -73,20 +73,6 @@ class Reader:
 # modify the code in the Table class so that it supports the insert operation
 # where an entry can be added to a list of dictionary
 
-class Project:
-    def __init__(self, project_name):
-        self.name = project_name
-        self.project_details = ''
-        self.member = []
-        self.vote_status = {}
-        self.work_space = {}
-
-    def send_member_request(self, pending_table):
-        pending_table.insert([self.name, self])
-
-    def send_advisor_request(self, pending_table):
-        pending_table.insert([self.name, self])
-
 
 # TEST
 class TEST:

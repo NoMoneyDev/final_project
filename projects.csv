@@ -1,3 +1,4 @@
 project_name,project_details,lead_student,member1,member2,advisor,status,vote_status,invite1,invite2
-Test,"project = project[int(input(""Remove member from which project: "")) - 1]",123,,,Declined,Declined,0,3938213,2472659
-Test2,2,123,,,Declined,Declined,0,2472659,
+Test,,123,,,Declined,Declined,0,3938213,2472659
+Test2,,123,,,Declined,Declined,0,2472659,
+inv,blalbalblb,123,5086282,,,Declined,0,,

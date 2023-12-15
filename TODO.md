@@ -20,7 +20,7 @@
 - [x] Add _members_ to **Project**
   - (Add / Remove) _members_ from **Project**
 
-- [ ] See and Modify _project details_
+- [x] See and Modify _project details_
   - edit _project details_
 
 - [ ] Send request to Advisors
@@ -30,9 +30,9 @@
   - Submit final report to **advisor**
 ---
 ### **Member Student**
-- [ ] See _invitational message_ from **Lead Student**
+- [x] See _invitational message_ from **Lead Student**
   - (Accept / Deny) _invitation_
-- [ ] See and Modify _project details_
+- [x] See and Modify _project details_
   - edit _project details_
 ---
 ### **Normal faculty who is not an advisor**

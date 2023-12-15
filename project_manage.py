@@ -85,6 +85,9 @@ class Application:
             elif response =='4':
                 self.Edit_project()
 
+            elif response =='7':
+                self.Accept_invitation()
+
 
 
             elif response == 'Q':
@@ -92,17 +95,10 @@ class Application:
             else:
                 print("Invalid response")
 
-    def member_student_run(self):
-        pass
-
-
-    def advisor_run(self):
-        while True:
-            pass
-
 
     def faculty_run(self):
-        pass
+        while True:
+            pass
 
 
     def admin_insert(self):
@@ -177,7 +173,7 @@ class Application:
         project = self.get_projects()
 
         for index, _project in enumerate(project):
-            print(f"{index + 1}. {_project}")
+            print(f"{index + 1}. {_project.name}")
 
 
         response = int(self.take_input("Invite member to which project: ",
@@ -207,6 +203,54 @@ class Application:
             elif response == 'N':
                 print("No invitation sent")
         print("Invitation sent successfully")
+        return
+
+    def Accept_invitation(self):
+        project_invite = [project for project in DB.search('project').table
+                          if project.invite1 == self.__id or project.invite2 == self.__id]
+
+        for index,project in enumerate(project_invite):
+            print(f"{index+1}. {project.name}")
+        print("Q. Do not accept")
+
+        while True:
+            response = input("Which project invitation do you want to accept? : ")
+            if response == 'Q':
+                return
+            check = lambda x: int(x)-1 in range(len(project_invite))
+            response = int(response) - 1
+            project = project_invite[response]
+
+            if check(response):
+                print("Invalid response")
+                print()
+                continue
+            elif project.member1 == '':
+                project.member1 = self.__id
+                if project.invite1 == self.__id:
+                    project.invite1 = ''
+                elif project.invite2 == self.__id:
+                    project.invite2 = ''
+                break
+            elif project.member2 == '':
+                project.member2 == self.__id
+                if project.invite1 == self.__id:
+                    project.invite1 = ''
+                elif project.invite2 == self.__id:
+                    project.invite2 = ''
+                break
+            else:
+                print("Project is already full.")
+                if project.invite1 == self.__id:
+                    project.invite1 = ''
+                elif project.invite2 == self.__id:
+                    project.invite2 = ''
+
+        print("Invitation accepted")
+        return
+
+
+
 
     def Remove_member(self):
         project = self.get_projects()
@@ -214,8 +258,9 @@ class Application:
         for index, _project in enumerate(project):
             print(f"{index + 1}. {_project.name}")
 
-        project = project[int(input("Remove member from which project: ")) - 1]
-        project = DB.search('project').table[project]
+        response = int(self.take_input("Remove member from which project: ",
+                                   lambda x: int(x)-1 in range(len(project))))-1
+        project = project[response]
         self.clear_screen()
 
         print("Member list: ")
@@ -231,7 +276,8 @@ class Application:
         print("Removed member successfully")
 
     def Edit_project(self):
-        project = self.get_projects()
+        project = self.get_projects() + [project for project in DB.search('project').table
+                                         if project.member1 == self.__id or project.member2 == self.__id]
 
         for index, _project in enumerate(project):
             print(f"{index + 1}. {_project.name}")
@@ -316,23 +362,14 @@ def initializing():
     project = []
     for _project in project_data:
         load_project = Project(_project['project_name'], _project['lead_student'])
-        if _project['project_details'] != '':
-            load_project.project_details = _project['project_details']
-        if _project['member1'] != '':
-            load_project.member1 = _project['member1']
-        if _project['member2'] != '':
-            load_project.project_details = _project['member2']
-        if _project['advisor'] != '':
-            load_project.advisor = _project['advisor']
-        if _project['status'] != '':
-            load_project.status = _project['status']
-        if _project['vote_status'] != '':
-            load_project.vote_status = _project['vote_status']
-        if _project['invite1'] != '':
-            load_project.invite1 = _project['invite1']
-        if _project['invite2'] != '':
-            load_project.invite2 = _project['invite2']
-
+        load_project.project_details = _project['project_details']
+        load_project.member1 = _project['member1']
+        load_project.project_details = _project['member2']
+        load_project.advisor = _project['advisor']
+        load_project.status = _project['status']
+        load_project.vote_status = _project['vote_status']
+        load_project.invite1 = _project['invite1']
+        load_project.invite2 = _project['invite2']
         project += [load_project]
 
     project = Table('project', project)

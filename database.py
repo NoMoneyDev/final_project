@@ -25,6 +25,9 @@ class Database:
             _str += f"'{name}':{data}\n"
         return _str
 
+    def get_data(self):
+        return self.__data
+
 
 # add in code for a Table class
 class Table:

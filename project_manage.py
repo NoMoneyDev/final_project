@@ -33,6 +33,7 @@ class Application:
         return None
 
     def Show_Menu(self, menu_choice):
+        self.clear_screen()
         print(f"Hello, {self.__username}!")
         print(menu_choice)
 
@@ -72,9 +73,8 @@ class Application:
 
             elif response == '7':
                 exit()
-
-
-
+            else:
+                print("Invalid response")
 
     def member_student_run(self):
         pass
@@ -83,9 +83,52 @@ class Application:
     def faculty_run(self):
         pass
 
-
     def admin_run(self):
-        pass
+        menu_choice = (f"1. Insert a new entry\n"
+                       f"2. Remove an entry\n"
+                       f"3. Logout")
+        while True:
+            self.Show_Menu(menu_choice)
+            response = input()
+            if response == '1':
+                self.admin_insert()
+            elif response == '2':
+                self.admin_remove()
+            elif response == '3':
+                exit()
+            else:
+                print("Invalid response")
+
+    def admin_insert(self):
+        all_table = DB.get_data()
+        print("Which table do you want to add entry to?")
+        for index,table in enumerate(all_table):
+            print(f"{index+1}. {table}")
+        response = int(self.take_input('', lambda x: int(x) in range(len(all_table)))) - 1
+        print(f"Adding entry to {list(all_table.keys())[response]}")
+        table_keys = DB.search(list(all_table.keys())[response]).table[0].keys()
+        while True:
+            self.clear_screen()
+            new_entry_input = input(f"Keys     : {list(table_keys)}\n"
+                              f"New entry: ")
+            entry = {}
+            if len(new_entry_input.split(',')) != len(table_keys):
+                print("Invalid entry")
+            else:
+                print("Your new entry is: ")
+                new_entry_str = "{"
+                for key,val in zip(table_keys, new_entry_input.split(',')):
+                    new_entry_str += f"{key.strip()} : {val.strip()}, "
+                    entry[key] = val
+                new_entry_str = new_entry_str[:-1] + "}"
+                print(new_entry_str)
+
+                confirm = self.take_input("Confirm? (Y/N): ",lambda x: x in ['Y','N'])
+                if confirm == 'Y':
+                    list(all_table.values())[response].insert(entry)
+                    return
+                elif confirm == 'N':
+                    continue
 
 
     def clear_screen(self):
@@ -111,25 +154,31 @@ class Application:
         for index, _project in enumerate(project):
             print(f"{index + 1}. {_project}")
 
-        while True:
-            response = int(input("Invite member to which project: ")) - 1
-            if 0 <= response < len(project):
-                project = project[response]
-                break
-            else:
-                print("Invalid response")
+
+        response = int(self.take_input("Invite member to which project: ",
+                                       lambda x : int(x) in range(len(project)))) - 1
+        project = project[response]
 
         id = input("Enter member's student id: ")
 
         if self.check_id(id):
             project = DB.search('project').filter(lambda proj: proj['project_name'] == project).table[0]
-            if project['member1'] == '':
-                project['member1'] = id
-            elif project['member2'] == '':
-                project['member2'] = id
+            if project['invite1'] == '':
+                project['invite1'] = id
+            elif project['invite2'] == '':
+                project['invite2'] = id
             else:
-                print('There can only be 3 students in a project.')
-                return
+                print('You can only invite 2 students at a time.')
+                response = self.take_input('Do you wish to replace this student with another? (Y/N): ',
+                                           lambda x: x in ['Y','N'])
+                if response == 'Y':
+                    print(f"1. {project['invite1']}\n"
+                          f"2. {project['invite2']}")
+                    response = self.take_input('Which student would you like the new student to replace with: ',
+                                    lambda x: int(x) in [1,2])
+                    project[f'invite{response}'] = id
+                elif response == 'N':
+                    print("No invitation sent")
             print("Invitation sent successfully")
         else:
             print("Invalid ID.")
@@ -157,6 +206,15 @@ class Application:
     def check_id(self,id):
         return any([id == ID['ID'] for ID in DB.search('person').select(['ID']).table])
 
+    def take_input(self,text : str,valid):
+        while True:
+            response = input(text)
+            if valid(response):
+                return response
+            else:
+                print("Invalid response")
+
+
 # start by adding the admin related code
 
 
@@ -181,7 +239,9 @@ def initializing():
 #                  'member2':id,
 #                  'advisor':'faculty',
 #                  'status':(Approved / Declined / Waiting),
-#                  'vote_status':number starting from 0, then adds up everytime when advisor votes approves}]
+#                  'vote_status':number starting from 0, then adds up everytime when advisor votes approves
+    #              'invite1':id,
+    #              'invite2':id}]
 
     # add the 'persons' table into the database
     DB = Database()
@@ -218,7 +278,7 @@ def exit():
     project = open('projects.csv', 'w')
     project_writer = csv.writer(project)
     project_writer.writerow(['project_name','project_details',
-                             'lead_student','member1','member2','advisor','status','vote_status'])
+                             'lead_student','member1','member2','advisor','status','vote_status','invite1','invite2'])
     for dictionary in DB.search('project').table:
         project_writer.writerow(dictionary.values())
     project.close()

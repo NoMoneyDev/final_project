@@ -1,10 +1,10 @@
 ### **Admin** 
-- [ ] Manage database
+- [x] Manage database
   - Insert new entry to **Table** in **Database**
   - Remove entry from **Table** in **Database**
 ---
 ### **Lead Student**
-- [ ] Create a project
+- [x] Create a project
   - _csv_ **Project** :
     - _project name_
     - _lead student_
@@ -14,10 +14,10 @@
     - _vote_status_ = number starting from 0, then adds up everytime when advisor votes approves
     - _project details_
     
-- [ ] Find _members_
+- [x] Find _members_
   - Send invitation message to **Member's student** id
 
-- [ ] Add _members_ to **Project**
+- [x] Add _members_ to **Project**
   - (Add / Remove) _members_ from **Project**
 
 - [ ] See and Modify _project details_

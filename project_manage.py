@@ -58,7 +58,8 @@ class Application:
                        f"4. Edit project\n"
                        f"5. Send advisor request\n"
                        f"6. Submit project\n"
-                       f"7. Logout\n")
+                       f"7. Accept project invitation\n"
+                       f"Q. Logout\n")
         while True:
             self.Show_Menu(menu_choice)
             response = input()
@@ -71,7 +72,7 @@ class Application:
 
 
 
-            elif response == '7':
+            elif response == 'Q':
                 exit()
             else:
                 print("Invalid response")
@@ -86,7 +87,7 @@ class Application:
     def admin_run(self):
         menu_choice = (f"1. Insert a new entry\n"
                        f"2. Remove an entry\n"
-                       f"3. Logout")
+                       f"Q. Logout")
         while True:
             self.Show_Menu(menu_choice)
             response = input()
@@ -94,7 +95,7 @@ class Application:
                 self.admin_insert()
             elif response == '2':
                 self.admin_remove()
-            elif response == '3':
+            elif response == 'Q':
                 exit()
             else:
                 print("Invalid response")
@@ -104,7 +105,7 @@ class Application:
         print("Which table do you want to add entry to?")
         for index,table in enumerate(all_table):
             print(f"{index+1}. {table}")
-        response = int(self.take_input('', lambda x: int(x) in range(len(all_table)))) - 1
+        response = int(self.take_input('', lambda x: int(x)-1 in range(len(all_table)))) - 1
         print(f"Adding entry to {list(all_table.keys())[response]}")
         table_keys = DB.search(list(all_table.keys())[response]).table[0].keys()
         while True:
@@ -130,10 +131,33 @@ class Application:
                 elif confirm == 'N':
                     continue
 
+    def admin_remove(self):
+        all_table = DB.get_data()
+        print("Which table do you want to remove entry from?")
+        for index, table in enumerate(all_table):
+            print(f"{index + 1}. {table}")
+        response = int(self.take_input('', lambda x: int(x)-1 in range(len(all_table)))) - 1
+        print(f"Removing entry from {list(all_table.keys())[response]}")
+        table = list(all_table.values())[response]
+        table_keys = list(DB.search(list(all_table.keys())[response]).table[0].keys())
+        padding = [table.aggregate(len, lambda x: max(x)+2, key) for key in table_keys]
+        table_keys.insert(0, '#')
+
+        for key,pad in zip(table_keys,padding):
+            print(f"|{key:<{pad}}|")
+        for index,entry in enumerate(table.table):
+            entry_str = f"|{index+1:<3}|"
+            for val,pad in zip(entry.values(), padding):
+                entry_str += f"|{val:<{pad}}|"
+            print(entry_str)
+
+        remove = int(self.take_input("Which entry do you want to remove: ",
+                                 lambda x: int(x)-1 in range(len(table.table))))-1
+        table.table.pop(remove)
+        print("Removed entry succesfully.")
 
     def clear_screen(self):
-        for _ in range(10):
-            print('\n'*5)
+        print('\n'*5)
 
     def Create_Project(self):
         project_name = input("Project name: ")
@@ -156,32 +180,29 @@ class Application:
 
 
         response = int(self.take_input("Invite member to which project: ",
-                                       lambda x : int(x) in range(len(project)))) - 1
+                                       lambda x : int(x)-1 in range(len(project)))) - 1
         project = project[response]
 
-        id = input("Enter member's student id: ")
+        id = self.take_input("Enter member's student id: ", self.check_id)
 
-        if self.check_id(id):
-            project = DB.search('project').filter(lambda proj: proj['project_name'] == project).table[0]
-            if project['invite1'] == '':
-                project['invite1'] = id
-            elif project['invite2'] == '':
-                project['invite2'] = id
-            else:
-                print('You can only invite 2 students at a time.')
-                response = self.take_input('Do you wish to replace this student with another? (Y/N): ',
-                                           lambda x: x in ['Y','N'])
-                if response == 'Y':
-                    print(f"1. {project['invite1']}\n"
-                          f"2. {project['invite2']}")
-                    response = self.take_input('Which student would you like the new student to replace with: ',
-                                    lambda x: int(x) in [1,2])
-                    project[f'invite{response}'] = id
-                elif response == 'N':
-                    print("No invitation sent")
-            print("Invitation sent successfully")
+        project = DB.search('project').filter(lambda proj: proj['project_name'] == project).table[0]
+        if project['invite1'] == '':
+            project['invite1'] = id
+        elif project['invite2'] == '':
+            project['invite2'] = id
         else:
-            print("Invalid ID.")
+            print('You can only invite 2 students at a time.')
+            response = self.take_input('Do you wish to replace this student with another? (Y/N): ',
+                                       lambda x: x in ['Y','N'])
+            if response == 'Y':
+                print(f"1. {project['invite1']}\n"
+                      f"2. {project['invite2']}")
+                response = self.take_input('Which student would you like the new student to replace with: ',
+                                lambda x: int(x) in [1,2])
+                project[f'invite{response}'] = id
+            elif response == 'N':
+                print("No invitation sent")
+        print("Invitation sent successfully")
 
     def Remove_member(self):
         project = self.get_projects()
@@ -190,13 +211,11 @@ class Application:
             print(f"{index + 1}. {_project.name}")
 
         project = project[int(input("Remove member from which project: ")) - 1]
-        id = input("Enter member's student id: ")
+        id = self.take_input("Enter member's student id: ", self.check_id)
 
-        if self.check_id(id) and id in DB.search('project').table[project.name].member:
-            DB.search('project').table[project.name].remove(id)
-            print("Removed member successfully")
-        else:
-            print("Invalid ID.")
+        DB.search('project').table[project.name].remove(id)
+        print("Removed member successfully")
+
 
     def get_projects(self):
         project = [_project['project_name'] for _project in DB.search('project').table
@@ -206,7 +225,7 @@ class Application:
     def check_id(self,id):
         return any([id == ID['ID'] for ID in DB.search('person').select(['ID']).table])
 
-    def take_input(self,text : str,valid):
+    def take_input(self,text, valid):
         while True:
             response = input(text)
             if valid(response):

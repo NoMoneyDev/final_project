@@ -60,6 +60,12 @@ class Table:
             selected += [new_entry]
         return Table(f"{self.name}_selected", selected)
 
+    def aggregate(self, function1, function, aggregation_key):
+        temps = []
+        for item in self.table:
+            temps += [function1(item[aggregation_key])]
+        return function(temps)
+
 
 class Reader:
     def read_csv(self, file_name):

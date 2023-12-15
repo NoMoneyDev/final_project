@@ -67,6 +67,7 @@ class Reader:
             rows = csv.DictReader(f)
             for r in rows:
                 data.append(dict(r))
+        f.close()
         return data
 
 
@@ -94,9 +95,6 @@ class TEST:
     def Test_Table_select(self):
         print(self.table.select(['first', 'last']))
 
-    def Test_Project(self):
-        _project = Project('Test')
-
 
 if __name__ == '__main__':
     Test = TEST()
@@ -104,4 +102,4 @@ if __name__ == '__main__':
     Test.Test_DB_insert()
     Test.Test_Table_filter()
     Test.Test_Table_select()
-    Test.Test_Project()
+

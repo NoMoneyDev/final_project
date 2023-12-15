@@ -3,6 +3,8 @@ from database import *
 import random
 import sys
 
+__location__ = os.path.realpath(
+    os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 class Application:
     def __init__(self):
@@ -95,12 +97,12 @@ class Application:
         project_details = input(f"Some details about {project_name}: ")
         project_table = DB.search('project')
         project_table.insert({'project_name':project_name,
+                              'project_details': project_details,
                               'lead_student':self.__id,
                               'member1':'',
                               'member2':'',
                               'status':'Declined',
-                              'vote_status':'',
-                              'project_details':project_details})
+                              'vote_status':''})
         print(f"Project {project_name} has been created.")
 
     def Invite_member(self):
@@ -173,12 +175,13 @@ def initializing():
     login = Table('login', reader.read_csv('login.csv'))
     project = Table('project', reader.read_csv('projects.csv'))
 #                [{'project_name':project_name,
+#                  'project_details': project_details,
 #                  'lead_student':id,
 #                  'member1':id,
 #                  'member2':id,
+#                  'advisor':'faculty',
 #                  'status':(Approved / Declined / Waiting),
-#                  'vote_status':number starting from 0, then adds up everytime when advisor votes approves,
-#                  'project_details':project_details}]
+#                  'vote_status':number starting from 0, then adds up everytime when advisor votes approves}]
 
     # add the 'persons' table into the database
     DB = Database()
@@ -214,7 +217,8 @@ def exit():
 
     project = open('projects.csv', 'w')
     project_writer = csv.writer(project)
-    project_writer.writerow(['project','invitation','pending_eval'])
+    project_writer.writerow(['project_name','project_details',
+                             'lead_student','member1','member2','advisor','status','vote_status'])
     for dictionary in DB.search('project').table:
         project_writer.writerow(dictionary.values())
     project.close()

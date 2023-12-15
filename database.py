@@ -5,6 +5,22 @@ import csv, os
 __location__ = os.path.realpath(
     os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
+class Project:
+    def __init__(self, project_name, id):
+        self.name = project_name
+        self.project_details = ''
+        self.lead_student = id
+        self.member1 = ''
+        self.member2 = ''
+        self.advisor = ''
+        self.status = 'Declined'
+        self.vote_status = 0
+        self.invite1 = ''
+        self.invite2 = ''
+
+    def save(self):
+        return (self.name, self.project_details, self.lead_student, self.member1, self.member2,
+                self.advisor, self.status, self.vote_status, self.invite1, self.invite2)
 
 # add in code for a Database class
 class Database:

@@ -47,9 +47,22 @@ class Application:
         elif val[1] == 'admin':
             self.admin_run()
 
-    def advisor_run(self):
+    def admin_run(self):
+        menu_choice = (f"1. Insert a new entry\n"
+                       f"2. Remove an entry\n"
+                       f"Q. Logout")
         while True:
-            pass
+            self.Show_Menu(menu_choice)
+            response = input()
+            if response == '1':
+                self.admin_insert()
+            elif response == '2':
+                self.admin_remove()
+            elif response == 'Q':
+                exit()
+            else:
+                print("Invalid response")
+
 
     def student_run(self):
         menu_choice = (f"1. Create a project\n"
@@ -69,6 +82,8 @@ class Application:
                 self.Invite_member()
             elif response == '3':
                 self.Remove_member()
+            elif response =='4':
+                self.Edit_project()
 
 
 
@@ -81,24 +96,14 @@ class Application:
         pass
 
 
+    def advisor_run(self):
+        while True:
+            pass
+
+
     def faculty_run(self):
         pass
 
-    def admin_run(self):
-        menu_choice = (f"1. Insert a new entry\n"
-                       f"2. Remove an entry\n"
-                       f"Q. Logout")
-        while True:
-            self.Show_Menu(menu_choice)
-            response = input()
-            if response == '1':
-                self.admin_insert()
-            elif response == '2':
-                self.admin_remove()
-            elif response == 'Q':
-                exit()
-            else:
-                print("Invalid response")
 
     def admin_insert(self):
         all_table = DB.get_data()
@@ -143,8 +148,10 @@ class Application:
         padding = [table.aggregate(len, lambda x: max(x)+2, key) for key in table_keys]
         table_keys.insert(0, '#')
 
-        for key,pad in zip(table_keys,padding):
-            print(f"|{key:<{pad}}|")
+        for key,pad in zip(table_keys,[3]+padding):
+            print(f"|{key:<{pad}}|",end='')
+        print()
+        print('-'*(sum(padding)+13))
         for index,entry in enumerate(table.table):
             entry_str = f"|{index+1:<3}|"
             for val,pad in zip(entry.values(), padding):
@@ -163,13 +170,7 @@ class Application:
         project_name = input("Project name: ")
         project_details = input(f"Some details about {project_name}: ")
         project_table = DB.search('project')
-        project_table.insert({'project_name':project_name,
-                              'project_details': project_details,
-                              'lead_student':self.__id,
-                              'member1':'',
-                              'member2':'',
-                              'status':'Declined',
-                              'vote_status':''})
+        project_table.insert(Project(project_name, self.__id))
         print(f"Project {project_name} has been created.")
 
     def Invite_member(self):
@@ -185,21 +186,24 @@ class Application:
 
         id = self.take_input("Enter member's student id: ", self.check_id)
 
-        project = DB.search('project').filter(lambda proj: proj['project_name'] == project).table[0]
-        if project['invite1'] == '':
-            project['invite1'] = id
-        elif project['invite2'] == '':
-            project['invite2'] = id
+        project = DB.search('project').filter(lambda proj: proj == project).table[0]
+        if project.invite1 == '':
+            project.invite1 = id
+        elif project.invite2 == '':
+            project.invite2 = id
         else:
             print('You can only invite 2 students at a time.')
-            response = self.take_input('Do you wish to replace this student with another? (Y/N): ',
+            response = self.take_input('Do you want to replace this student with another? (Y/N): ',
                                        lambda x: x in ['Y','N'])
             if response == 'Y':
-                print(f"1. {project['invite1']}\n"
-                      f"2. {project['invite2']}")
+                print(f"1. {project.invite1}\n"
+                      f"2. {project.invite2}")
                 response = self.take_input('Which student would you like the new student to replace with: ',
                                 lambda x: int(x) in [1,2])
-                project[f'invite{response}'] = id
+                if response == 1:
+                    project.invite1 = id
+                elif response == 2:
+                    project.invite2 = id
             elif response == 'N':
                 print("No invitation sent")
         print("Invitation sent successfully")
@@ -211,15 +215,48 @@ class Application:
             print(f"{index + 1}. {_project.name}")
 
         project = project[int(input("Remove member from which project: ")) - 1]
-        id = self.take_input("Enter member's student id: ", self.check_id)
+        project = DB.search('project').table[project]
+        self.clear_screen()
 
-        DB.search('project').table[project.name].remove(id)
+        print("Member list: ")
+        print(f"1. {project.member1}")
+        print(f"2. {project.member2}")
+        student = self.take_input("Which student do you want to remove? : ",
+                                  lambda x: int(x) in [1,2])
+        if student == '1':
+            project.member1 = ''
+        elif student == '2':
+            project.member2 = ''
+
         print("Removed member successfully")
 
+    def Edit_project(self):
+        project = self.get_projects()
+
+        for index, _project in enumerate(project):
+            print(f"{index + 1}. {_project.name}")
+
+        project = project[int(input("Edit which project: ")) - 1]
+
+        while True:
+            print("Project detail:")
+            print(project.project_details)
+            new_project_detail = input("New project detail:\n")
+            self.clear_screen()
+            print("New project detail:")
+            print(self.fit_text_to_screen(new_project_detail))
+
+            confirm = self.take_input('Do you want to replace this as the new project detail? (Y/N): ',
+                                       lambda x: x in ['Y','N'])
+            if confirm == 'Y':
+                project.project_details = new_project_detail
+                return
+            elif confirm =='N':
+                continue
 
     def get_projects(self):
-        project = [_project['project_name'] for _project in DB.search('project').table
-                   if _project['lead_student'] == self.__id]
+        project = [_project for _project in DB.search('project').table
+                   if _project.lead_student == self.__id]
         return project
 
     def check_id(self,id):
@@ -232,6 +269,20 @@ class Application:
                 return response
             else:
                 print("Invalid response")
+
+    def fit_text_to_screen(self,txt):
+        txt = txt.split()
+        new_txt = ''
+        while len(txt) != 0:
+            if len(txt) < 10:
+                new_txt += ' '.join(txt[:len(txt)])
+                txt = []
+            else:
+                new_txt += ' '.join(txt[:10])
+                txt = txt[10:]
+            new_txt += '\n'
+        return new_txt
+
 
 
 # start by adding the admin related code
@@ -250,7 +301,7 @@ def initializing():
     # create a 'persons' table
     person = Table('person', reader.read_csv('persons.csv'))
     login = Table('login', reader.read_csv('login.csv'))
-    project = Table('project', reader.read_csv('projects.csv'))
+    project_data = reader.read_csv('projects.csv')
 #                [{'project_name':project_name,
 #                  'project_details': project_details,
 #                  'lead_student':id,
@@ -259,9 +310,32 @@ def initializing():
 #                  'advisor':'faculty',
 #                  'status':(Approved / Declined / Waiting),
 #                  'vote_status':number starting from 0, then adds up everytime when advisor votes approves
-    #              'invite1':id,
-    #              'invite2':id}]
+#                  'invite1':id,
+#                  'invite2':id}]
 
+    project = []
+    for _project in project_data:
+        load_project = Project(_project['project_name'], _project['lead_student'])
+        if _project['project_details'] != '':
+            load_project.project_details = _project['project_details']
+        if _project['member1'] != '':
+            load_project.member1 = _project['member1']
+        if _project['member2'] != '':
+            load_project.project_details = _project['member2']
+        if _project['advisor'] != '':
+            load_project.advisor = _project['advisor']
+        if _project['status'] != '':
+            load_project.status = _project['status']
+        if _project['vote_status'] != '':
+            load_project.vote_status = _project['vote_status']
+        if _project['invite1'] != '':
+            load_project.invite1 = _project['invite1']
+        if _project['invite2'] != '':
+            load_project.invite2 = _project['invite2']
+
+        project += [load_project]
+
+    project = Table('project', project)
     # add the 'persons' table into the database
     DB = Database()
 
@@ -298,8 +372,8 @@ def exit():
     project_writer = csv.writer(project)
     project_writer.writerow(['project_name','project_details',
                              'lead_student','member1','member2','advisor','status','vote_status','invite1','invite2'])
-    for dictionary in DB.search('project').table:
-        project_writer.writerow(dictionary.values())
+    for _project in DB.search('project').table:
+        project_writer.writerow(_project.save())
     project.close()
 
     print("Goodbye!")

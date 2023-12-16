@@ -20,8 +20,8 @@ class Project:
         self.invite_advisor = ''
 
     def save(self):
-        return (self.name, self.project_details, self.lead_student, self.member1, self.member2,
-                self.advisor, self.status, self.vote_status, self.invite1, self.invite2, self.invite_advisor)
+        return [self.name, self.project_details, self.lead_student, self.member1, self.member2,
+                self.advisor, self.status, self.vote_status, self.invite1, self.invite2, self.invite_advisor]
 
     def __fit_text_to_screen(self,txt):
         txt = txt.split()
@@ -92,9 +92,17 @@ class Table:
             print()
             print('-' * (sum(padding) + 3 + 2 * len(_keys)))
             _str = ''
+
             for index, project in enumerate(self.table):
+                project_data = project.save()
+                if project.vote_status != '':
+                    _vote_str = project_data[7].strip(":").split(':')
+                    _vote_str = [vote.split()[1] for vote in _vote_str]
+                    _vote_str = ' '.join(_vote_str)
+                    project_data[7] = _vote_str
+
                 _str += f"|{index + 1:<3}|"
-                for val, pad in zip(project.save(), padding):
+                for val, pad in zip(project_data, padding):
                     if len(val) > pad-3:
                         val = val[:pad-3] + '...'
                     _str += f"|{val:<{pad}}|"

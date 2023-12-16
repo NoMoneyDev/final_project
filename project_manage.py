@@ -186,7 +186,7 @@ class Application:
                 new_entry_str = "{"
                 for key,val in zip(table_keys, new_entry_input.split(',')):
                     new_entry_str += f"{key.strip()} : {val.strip()}, "
-                    entry[key] = val
+                    entry[key] = val.strip()
                 new_entry_str = new_entry_str[:-1] + "}"
                 print(new_entry_str)
 
@@ -234,8 +234,17 @@ class Application:
         table = list(all_table.values())[response]
         print(table)
 
-        remove = int(self.take_input("Which entry do you want to remove: ",
-                                 lambda x: int(x)-1 in range(len(table.table))))-1
+        check = lambda x: int(x) - 1 in range(len(table.table))
+        while True:
+            remove = input("Which entry do you want to remove (Enter 'Q' to quit): ")
+            if remove == 'Q':
+                return
+            elif check(remove):
+                remove = int(remove)-1
+                break
+            else:
+                print("Invalid input")
+
         table.table.pop(remove)
         print("Removed entry succesfully.")
         input('\nPress enter.')
@@ -256,7 +265,9 @@ class Application:
         project_name = input("Project name: ")
         project_details = input(f"Some details about {project_name}: ")
         project_table = DB.search('project')
-        project_table.insert(Project(project_name, self.__id))
+        project = Project(project_name, self.__id)
+        project.project_details = project_details
+        project_table.insert(project)
         print(f"Project {project_name} has been created.")
         input('\nPress enter.')
         self.clear_screen()
@@ -282,7 +293,12 @@ class Application:
                                        lambda x : int(x)-1 in range(len(all_project)))) - 1
         project = all_project[response]
 
-        id = self.take_input("Enter member's student id: ",self.check_id and self.isStudent)
+        while True:
+            id = input("Enter member's student id: ")
+            if self.check_id(id) and self.isStudent(id) and id != self.__id:
+                break
+            else:
+                print("Invalid ID\n")
 
         project = DB.search('project').filter(lambda proj: proj == project).table[0]
         if project.invite1 == '':
@@ -385,7 +401,6 @@ class Application:
         response = int(self.take_input("Remove member from which project: ",
                                    lambda x: int(x)-1 in range(len(all_project))))-1
         project = all_project[response]
-        self.clear_screen()
 
         if all([i=='' for i in [project.member1, project.member2]]):
             print("There is no member in this project.")
@@ -393,6 +408,7 @@ class Application:
             self.clear_screen()
             return
 
+        self.clear_screen()
         member = [project.member1, project.member2]
         print("Member list: ")
         print(f"1. {project.member1}")
@@ -442,19 +458,23 @@ class Application:
 
         while True:
             print("Project detail:")
-            print(project.project_details)
-            new_project_detail = input("New project detail:\n")
+            print(self.fit_text_to_screen(project.project_details))
+            new_project_detail = input("\nNew project detail:\n")
             self.clear_screen()
             print("New project detail:")
             print(self.fit_text_to_screen(new_project_detail))
 
-            confirm = self.take_input('Do you want to replace this as the new project detail? (Y/N): ',
-                                       lambda x: x in ['Y','N'])
-            if confirm == 'Y':
-                project.project_details = new_project_detail
-                return
-            elif confirm =='N':
-                continue
+            while True:
+                confirm = input('Do you want to replace this as the new project detail? '
+                                '(Y/N) (Enter "Q" to cancel): ')
+
+                if confirm == 'Y':
+                    project.project_details = new_project_detail
+                    return
+                elif confirm == 'N':
+                    break
+                elif confirm == 'Q':
+                    return
 
     def get_projects(self):
         '''
@@ -543,6 +563,7 @@ class Application:
             if response == 'Y':
                 id = self.take_input("Advisor's ID : ", self.check_advisor_id)
                 project.invite_advisor = id
+                print("Advisor request sent.")
                 input('\nPress enter.')
                 self.clear_screen()
                 return
@@ -686,12 +707,13 @@ class Application:
                 continue
 
             if vote == 'Y':
-                project.vote_status += f'{self.__id} 1 '
+                project.vote_status += f':{self.__id} 1 '
                 self.check_project_eval(project)
                 return
             elif vote == 'N':
                 project.status = 'Declined'
                 project.vote_status = ''
+                return
 
     def check_project_eval(self, project):
         '''
@@ -714,13 +736,14 @@ class Application:
         :return: True if user already evaluated the project else False
         '''
         if project.vote_status == '': return False
-        _all_vote = project.vote_status.split(',')
-        for vote in _all_vote:
+        _all_vote = project.vote_status.split(':')
+        for vote in _all_vote[1:]:
             if self.__id == vote.split()[0]:
                 print("You already evaluated this project.")
                 input('\nPress enter.')
                 self.clear_screen()
                 return True
+        return False
 
     def check_advisor_id(self, id):
         all_person = DB.search('person').table
@@ -759,7 +782,7 @@ def initializing():
         load_project = Project(_project['project_name'], _project['lead_student'])
         load_project.project_details = _project['project_details']
         load_project.member1 = _project['member1']
-        load_project.project_details = _project['member2']
+        load_project.member2 = _project['member2']
         load_project.advisor = _project['advisor']
         load_project.status = _project['status']
         load_project.vote_status = _project['vote_status']

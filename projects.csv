@@ -1,4 +1,4 @@
-project_name,project_details,lead_student,member1,member2,advisor,status,vote_status,invite1,invite2
-Test,,123,,,Declined,Declined,0,3938213,2472659
-Test2,,123,,,Declined,Declined,0,2472659,
-inv,blalbalblb,123,5086282,,,Declined,0,,
+project_name,project_details,lead_student,member1,member2,advisor,status,vote_status,invite1,invite2,invite_advisor
+Test,,123,,,,Declined,Lea,3938213,2472659,
+inv,,123,5086282,,456,Declined,,,,
+mokey,,123,,,456,Waiting,456 1 ,5484541,,

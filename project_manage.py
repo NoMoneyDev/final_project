@@ -38,15 +38,14 @@ class Application:
         print(menu_choice)
 
     def Login(self,val):
-        if val[1] == 'advisor':
-            self.advisor_run()
-        elif val[1] == 'student':
+        if val[1] == 'student':
             self.student_run()
         elif val[1] == 'faculty':
             self.faculty_run()
         elif val[1] == 'admin':
             self.admin_run()
 
+    # start by adding the admin related code
     def admin_run(self):
         menu_choice = (f"1. Insert a new entry\n"
                        f"2. Remove an entry\n"
@@ -82,10 +81,13 @@ class Application:
                 self.Invite_member()
             elif response == '3':
                 self.Remove_member()
-            elif response =='4':
+            elif response == '4':
                 self.Edit_project()
-
-            elif response =='7':
+            elif response == '5':
+                self.Send_advisor_req()
+            elif response == '6':
+                self.Send_eval_req()
+            elif response == '7':
                 self.Accept_invitation()
 
 
@@ -97,8 +99,23 @@ class Application:
 
 
     def faculty_run(self):
+        menu_choice = (f"1. See all project's detail\n"
+                       f"2. Accept project advising invitation\n"
+                       f"3. Evaluate project\n"
+                       f"Q. Logout\n")
         while True:
-            pass
+            self.Show_Menu(menu_choice)
+            response = input()
+            if response == '1':
+                self.See_all_project_detail()
+            elif response == '2':
+                self.Accept_advisor()
+            elif response =='3':
+                self.Evaluate_project()
+            elif response == 'Q':
+                exit()
+            else:
+                print("Invalid response")
 
 
     def admin_insert(self):
@@ -106,16 +123,34 @@ class Application:
         print("Which table do you want to add entry to?")
         for index,table in enumerate(all_table):
             print(f"{index+1}. {table}")
-        response = int(self.take_input('', lambda x: int(x)-1 in range(len(all_table)))) - 1
-        print(f"Adding entry to {list(all_table.keys())[response]}")
-        table_keys = DB.search(list(all_table.keys())[response]).table[0].keys()
+        print("(Enter 'Q' to quit)")
+
+        response = input()
+        if response == 'Q':
+            return
+        else:
+            check = lambda x: int(x) - 1 in range(len(all_table))
+            if check(response):
+                response = int(response) - 1
+
+        table = list(all_table.values())[response]
+        if table.name == 'project':
+            table_keys = ['project_name','project_details','lead_student','member1','member2',
+                             'advisor','status','vote_status','invite1','invite2','invite_advisor']
+        else:
+            table_keys = DB.search(list(all_table.keys())[response]).table[0].keys()
         while True:
             self.clear_screen()
+            print(f"Adding entry to {list(all_table.keys())[response]}")
             new_entry_input = input(f"Keys     : {list(table_keys)}\n"
-                              f"New entry: ")
+                                    f"New entry: ")
             entry = {}
+            if new_entry_input == 'Q':
+                return
             if len(new_entry_input.split(',')) != len(table_keys):
                 print("Invalid entry")
+                input('\nPress enter.')
+                continue
             else:
                 print("Your new entry is: ")
                 new_entry_str = "{"
@@ -127,7 +162,22 @@ class Application:
 
                 confirm = self.take_input("Confirm? (Y/N): ",lambda x: x in ['Y','N'])
                 if confirm == 'Y':
-                    list(all_table.values())[response].insert(entry)
+                    if table.name == 'project':
+                        load_project = Project(entry['project_name'], entry['lead_student'])
+                        load_project.project_details = entry['project_details']
+                        load_project.member1 = entry['member1']
+                        load_project.project_details = entry['member2']
+                        load_project.advisor = entry['advisor']
+                        load_project.status = entry['status']
+                        load_project.vote_status = entry['vote_status']
+                        load_project.invite1 = entry['invite1']
+                        load_project.invite2 = entry['invite2']
+                        load_project.invite_advisor = entry['invite_advisor']
+                        table.insert(load_project)
+                    else:
+                        table.insert(entry)
+                    input('\nPress enter.')
+                    self.clear_screen()
                     return
                 elif confirm == 'N':
                     continue
@@ -137,27 +187,25 @@ class Application:
         print("Which table do you want to remove entry from?")
         for index, table in enumerate(all_table):
             print(f"{index + 1}. {table}")
-        response = int(self.take_input('', lambda x: int(x)-1 in range(len(all_table)))) - 1
+        print("(Enter 'Q' to quit)")
+        response = input()
+        if response =='Q':
+            return
+        else:
+            check = lambda x: int(x) - 1 in range(len(all_table))
+            if check(response):
+                response = int(response)-1
+
         print(f"Removing entry from {list(all_table.keys())[response]}")
         table = list(all_table.values())[response]
-        table_keys = list(DB.search(list(all_table.keys())[response]).table[0].keys())
-        padding = [table.aggregate(len, lambda x: max(x)+2, key) for key in table_keys]
-        table_keys.insert(0, '#')
-
-        for key,pad in zip(table_keys,[3]+padding):
-            print(f"|{key:<{pad}}|",end='')
-        print()
-        print('-'*(sum(padding)+13))
-        for index,entry in enumerate(table.table):
-            entry_str = f"|{index+1:<3}|"
-            for val,pad in zip(entry.values(), padding):
-                entry_str += f"|{val:<{pad}}|"
-            print(entry_str)
+        print(table)
 
         remove = int(self.take_input("Which entry do you want to remove: ",
                                  lambda x: int(x)-1 in range(len(table.table))))-1
         table.table.pop(remove)
         print("Removed entry succesfully.")
+        input('\nPress enter.')
+        self.clear_screen()
 
     def clear_screen(self):
         print('\n'*5)
@@ -168,19 +216,27 @@ class Application:
         project_table = DB.search('project')
         project_table.insert(Project(project_name, self.__id))
         print(f"Project {project_name} has been created.")
+        input('\nPress enter.')
+        self.clear_screen()
 
     def Invite_member(self):
-        project = self.get_projects()
+        all_project = self.get_projects()
 
-        for index, _project in enumerate(project):
+        if len(all_project) == 0:
+            print("You don't have any projects yet.")
+            input('\nPress enter.')
+            self.clear_screen()
+            return
+
+        for index, _project in enumerate(all_project):
             print(f"{index + 1}. {_project.name}")
 
 
         response = int(self.take_input("Invite member to which project: ",
-                                       lambda x : int(x)-1 in range(len(project)))) - 1
-        project = project[response]
+                                       lambda x : int(x)-1 in range(len(all_project)))) - 1
+        project = all_project[response]
 
-        id = self.take_input("Enter member's student id: ", self.check_id)
+        id = self.take_input("Enter member's student id: ",self.check_id and self.isStudent)
 
         project = DB.search('project').filter(lambda proj: proj == project).table[0]
         if project.invite1 == '':
@@ -202,12 +258,23 @@ class Application:
                     project.invite2 = id
             elif response == 'N':
                 print("No invitation sent")
+                input('\nPress enter.')
+                self.clear_screen()
+                return
         print("Invitation sent successfully")
+        input('\nPress enter.')
+        self.clear_screen()
         return
 
     def Accept_invitation(self):
         project_invite = [project for project in DB.search('project').table
                           if project.invite1 == self.__id or project.invite2 == self.__id]
+
+        if len(project_invite) == 0:
+            print("You don't have any invitations yet.")
+            input('\nPress enter.')
+            self.clear_screen()
+            return
 
         for index,project in enumerate(project_invite):
             print(f"{index+1}. {project.name}")
@@ -249,18 +316,21 @@ class Application:
         print("Invitation accepted")
         return
 
-
-
-
     def Remove_member(self):
-        project = self.get_projects()
+        all_project = self.get_projects()
 
-        for index, _project in enumerate(project):
+        if len(all_project) == 0:
+            print("You don't have any projects yet.")
+            input('\nPress enter.')
+            self.clear_screen()
+            return
+
+        for index, _project in enumerate(all_project):
             print(f"{index + 1}. {_project.name}")
 
         response = int(self.take_input("Remove member from which project: ",
-                                   lambda x: int(x)-1 in range(len(project))))-1
-        project = project[response]
+                                   lambda x: int(x)-1 in range(len(all_project))))-1
+        project = all_project[response]
         self.clear_screen()
 
         print("Member list: ")
@@ -276,13 +346,32 @@ class Application:
         print("Removed member successfully")
 
     def Edit_project(self):
-        project = self.get_projects() + [project for project in DB.search('project').table
+        all_project = self.get_projects() + [project for project in DB.search('project').table
                                          if project.member1 == self.__id or project.member2 == self.__id]
 
-        for index, _project in enumerate(project):
+        if len(all_project) == 0:
+            print("You are not a member of any projects yet.")
+            input('\nPress enter.')
+            self.clear_screen()
+            return
+
+        for index, _project in enumerate(all_project):
             print(f"{index + 1}. {_project.name}")
 
-        project = project[int(input("Edit which project: ")) - 1]
+        while True:
+            response = input("Edit which project? : ")
+            if response == 'Q':
+                return
+            check = lambda x: int(x) - 1 in range(len(all_project))
+            if check(response):
+                response = int(response) - 1
+                break
+            else:
+                print("Invalid input.")
+                input('\nPress enter.')
+                self.clear_screen()
+
+        project = all_project[response]
 
         while True:
             print("Project detail:")
@@ -329,17 +418,222 @@ class Application:
             new_txt += '\n'
         return new_txt
 
+    def See_all_project_detail(self):
+        all_project = DB.search('project')
+        print(all_project)
+        _continue = input('Press enter :')
+
+    def Send_advisor_req(self):
+        all_project = self.get_projects()
+
+        if len(all_project) == 0:
+            print("You don't have any projects yet.")
+            input('\nPress enter.')
+            self.clear_screen()
+            return
+
+        for index,project in enumerate(all_project):
+            print(f"{index+1}. {project.name}")
+        response = int(self.take_input("Which project do you want to send advisor request from : ",
+                                   lambda x: int(x)-1 in range(len(all_project))))-1
+        project = all_project[response]
+        if project.advisor != '':
+            print("You already have an advisor.")
+            input('\nPress enter.')
+            self.clear_screen()
+            return
+        if project.invite_advisor != '':
+            response = self.take_input("Do you want to overwrite the previous invite? (Y/N): ",
+                                       lambda x: x in ['Y','N'])
+            if response == 'Y':
+                id = self.take_input("Advisor's ID : ", self.check_id)
+                project.invite_advisor = id
+                input('\nPress enter.')
+                self.clear_screen()
+                return
+            elif response == 'N':
+                return
+
+        id = self.take_input("Advisor's ID : ", self.check_id)
+        project.invite_advisor = id
+        input('\nPress enter.')
+        self.clear_screen()
 
 
-# start by adding the admin related code
 
+    def Accept_advisor(self):
+        '''
+        Let advisor accept advisor request that student's sent out
+        :return: Nothing
+        '''
+        all_project = DB.search('project').table
+        all_project = [project for project in all_project if project.invite_advisor == self.__id]
 
+        if len(all_project) == 0:
+            print("You don't have any advisor request at the moment.")
+            input('\nPress enter.')
+            self.clear_screen()
+            return
 
+        for index,project in enumerate(all_project):
+            print(f"{index+1}. {project.name}")
 
+        response = int(self.take_input("Which project do you want to be an advisor for? : ",
+                                       lambda x: int(x) - 1 in range(len(all_project)))) - 1
+        project = all_project[response]
+        project.advisor = self.__id
+        project.invite_advisor = ''
+        print(f"You are now the advisor for {project.name}")
+        input('\nPress enter.')
+        self.clear_screen()
+
+    def isStudent(self,id):
+        '''
+        Check if the id given is a student id from 'persons.csv'
+        :param id: id that you want to user
+        :return: True if the id is a student id else False
+        '''
+        all_person = DB.search('person').table
+        for person in all_person:
+            if person['ID'] == id:
+                return person['type'] == 'student'
+
+    def Send_eval_req(self):
+        '''
+        Ask user which project to send for evaluation, then change the projects status to "Waiting".
+        :return: Nothing
+        '''
+        all_project = self.get_projects()
+
+        if len(all_project) == 0:
+            print("You don't have any projects yet.")
+            input('\nPress enter.')
+            self.clear_screen()
+            return
+
+        for index, _project in enumerate(all_project):
+            print(f"{index + 1}. {_project.name}")
+        print("(Enter 'Q' to quit)")
+
+        while True:
+            response = input("Send evaluation request from which project? : ")
+            if response == 'Q':
+                return
+
+            check = lambda x: int(x) - 1 in range(len(all_project))
+            if check(response):
+                response = int(response) - 1
+                break
+            else:
+                print("Invalid input.")
+                input('\nPress enter.')
+                self.clear_screen()
+
+        project = all_project[response]
+
+        if project.status == 'Waiting':
+            print("Already in evaluation process.")
+            input('\nPress enter.')
+            self.clear_screen()
+            return
+
+        project.status = 'Waiting'
+        print("Evaluation request sent successfully.")
+        input('\nPress enter.')
+        self.clear_screen()
+        return
+
+    def Evaluate_project(self):
+        '''
+        Ask user which project they want to evaluate then let them vote
+        :return: Nothing
+        '''
+        all_project = [project for project in DB.search('project').table if project.status == 'Waiting']
+
+        if len(all_project) == 0:
+            print("No project to evaluate yet.")
+            input('\nPress enter.')
+            self.clear_screen()
+            return
+
+        for index,project in enumerate(all_project):
+            print(f"{index+1}. {project.name}")
+        print("(Enter 'Q' to quit)")
+
+        while True:
+            response = input("Which project would you like to evaluate? : ")
+            if response == 'Q':
+                return
+
+            check = lambda x: int(x) - 1 in range(len(all_project))
+            if check(response):
+                response = int(response) - 1
+                break
+            else:
+                print("Invalid input.")
+                input('\nPress enter.')
+                self.clear_screen()
+        self.clear_screen()
+
+        project = all_project[response]
+
+        if self.check_voted(project):
+            return
+
+        print(project)
+
+        while True:
+            vote = input("Approves/Not approves (Y/N) : ")
+            if vote not in ['Y','N']:
+                print("Invalid input.")
+                input('\nPress enter.')
+                self.clear_screen()
+                continue
+
+            if vote == 'Y':
+                project.vote_status += f'{self.__id} 1 '
+                self.check_project_eval(project)
+                return
+            elif vote == 'N':
+                project.status = 'Declined'
+                project.vote_status = ''
+
+    def check_project_eval(self, project):
+        '''
+        Check if project has already been voted by every faculty and approves the project if so.
+        :param project: Project object to check
+        :return: Nothing
+        '''
+        all_faculty_num = len([fac for fac in DB.search('person').table if fac['type'] == 'faculty'])
+
+        if project.vote_status.split(',') != all_faculty_num:
+            return
+
+        project.status = 'Approved'
+        project.vote_status = ''
+
+    def check_voted(self, project):
+        '''
+        Check if the user has evaluated this project yet
+        :param project: Project to check if the user has evaluated this project yet or no
+        :return: True if user already evaluated the project else False
+        '''
+        if project.vote_status == '': return False
+        _all_vote = project.vote_status.split(',')
+        for vote in _all_vote:
+            if self.__id == vote.split()[0]:
+                print("You already evaluated this project.")
+                input('\nPress enter.')
+                self.clear_screen()
+                return True
 
 
 # define a function called initializing
 def initializing():
+    '''
+    Program setup
+    :return:
+    '''
     global DB, application
     # create an object to read an input csv file, persons.csv
     reader = Reader()
@@ -370,6 +664,7 @@ def initializing():
         load_project.vote_status = _project['vote_status']
         load_project.invite1 = _project['invite1']
         load_project.invite2 = _project['invite2']
+        load_project.invite_advisor = _project['invite_advisor']
         project += [load_project]
 
     project = Table('project', project)
@@ -393,7 +688,7 @@ def exit():
     # https://www.pythonforbeginners.com/basics/list-of-dictionaries-to-csv-in-python
     person = open('persons.csv', 'w')
     person_writer = csv.writer(person)
-    person_writer.writerow(['ID','fist','last','type'])
+    person_writer.writerow(['ID','first','last','type'])
     for dictionary in DB.search('person').table:
         person_writer.writerow(dictionary.values())
     person.close()
@@ -407,8 +702,8 @@ def exit():
 
     project = open('projects.csv', 'w')
     project_writer = csv.writer(project)
-    project_writer.writerow(['project_name','project_details',
-                             'lead_student','member1','member2','advisor','status','vote_status','invite1','invite2'])
+    project_writer.writerow(['project_name','project_details','lead_student','member1','member2',
+                             'advisor','status','vote_status','invite1','invite2','invite_advisor'])
     for _project in DB.search('project').table:
         project_writer.writerow(_project.save())
     project.close()

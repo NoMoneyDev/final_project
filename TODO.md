@@ -11,7 +11,8 @@
     - _member1_
     - _member2_
     - _status : (Approved / Declined / Waiting)_
-    - _vote_status_ = number starting from 0, then adds up everytime when advisor votes approves
+    - _vote_status_ : (e.g. '123456 1, 456789' 0 ; 
+      means faculty "123456" voted _approves_, faculty "456789" voted _not approves_)
     - _project details_
     
 - [x] Find _members_

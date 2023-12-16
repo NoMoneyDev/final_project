@@ -24,10 +24,10 @@
 - [x] See and Modify _project details_
   - edit _project details_
 
-- [ ] Send request to Advisors
+- [x] Send request to Advisors
   - Send request message to **advisors**
 
-- [ ] Submit final project report
+- [x] Submit final project report
   - Submit final report to **advisor**
 ---
 ### **Member Student**
@@ -37,17 +37,17 @@
   - edit _project details_
 ---
 ### **Normal faculty who is not an advisor**
-- [ ] See details of all the **Project**
+- [x] See details of all the **Project**
   - Have access to all **Project** object
-- [ ] Evaluate **Project**s
+- [x] Evaluate **Project**s
   - Vote (Pass / Not Pass) to **Project** object
 ---
 ### **Advising faculty**
-- [ ] See request to be **advisor**
+- [x] See request to be **advisor**
   - Send (Accept / Deny) response
-- [ ] See details of all the **Project**
+- [x] See details of all the **Project**
   - Have access to all **Project** object
-- [ ] Evaluate **Project**s
+- [x] Evaluate **Project**s
   - Vote (Pass / Not Pass) to **Project** object
-- [ ] Approve **Project**
+- [x] Approve **Project**
 ---

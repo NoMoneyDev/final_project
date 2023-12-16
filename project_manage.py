@@ -8,10 +8,17 @@ __location__ = os.path.realpath(
 
 class Application:
     def __init__(self):
+        '''
+        initialize
+        '''
         self.__username = ''
         self.__id = ''
 
     def Start_Application(self):
+        '''
+        Start the program
+        :return: Nothing
+        '''
         while True:
             user = self.Login_Prompt()
             self.Login(user)
@@ -33,11 +40,21 @@ class Application:
         return None
 
     def Show_Menu(self, menu_choice):
+        '''
+        Show menu for the user
+        :param menu_choice: string to use as menu
+        :return: Nothing
+        '''
         self.clear_screen()
         print(f"Hello, {self.__username}!")
         print(menu_choice)
 
     def Login(self,val):
+        '''
+        Login
+        :param val: resulting tuple from Login_Prompt() function
+        :return: Nothing
+        '''
         if val[1] == 'student':
             self.student_run()
         elif val[1] == 'faculty':
@@ -47,6 +64,10 @@ class Application:
 
     # start by adding the admin related code
     def admin_run(self):
+        '''
+        If user is admin, run this.
+        :return: Nothing
+        '''
         menu_choice = (f"1. Insert a new entry\n"
                        f"2. Remove an entry\n"
                        f"Q. Logout")
@@ -64,6 +85,10 @@ class Application:
 
 
     def student_run(self):
+        '''
+        If user is student run this.
+        :return: Nothing
+        '''
         menu_choice = (f"1. Create a project\n"
                        f"2. Invite member to project\n"
                        f"3. Remove member from project\n"
@@ -89,9 +114,6 @@ class Application:
                 self.Send_eval_req()
             elif response == '7':
                 self.Accept_invitation()
-
-
-
             elif response == 'Q':
                 exit()
             else:
@@ -99,6 +121,10 @@ class Application:
 
 
     def faculty_run(self):
+        '''
+        If user is faculty, run this.
+        :return: Nothing
+        '''
         menu_choice = (f"1. See all project's detail\n"
                        f"2. Accept project advising invitation\n"
                        f"3. Evaluate project\n"
@@ -119,6 +145,10 @@ class Application:
 
 
     def admin_insert(self):
+        '''
+        Let admin insert an entry to a table
+        :return: Nothing
+        '''
         all_table = DB.get_data()
         print("Which table do you want to add entry to?")
         for index,table in enumerate(all_table):
@@ -183,6 +213,10 @@ class Application:
                     continue
 
     def admin_remove(self):
+        '''
+        Let admin remove an entry from a table
+        :return: Nothing
+        '''
         all_table = DB.get_data()
         print("Which table do you want to remove entry from?")
         for index, table in enumerate(all_table):
@@ -208,9 +242,17 @@ class Application:
         self.clear_screen()
 
     def clear_screen(self):
+        '''
+        Create some blank space for a little more cleanliness
+        :return: Nothing
+        '''
         print('\n'*5)
 
     def Create_Project(self):
+        '''
+        Let student create their project
+        :return: Nothing
+        '''
         project_name = input("Project name: ")
         project_details = input(f"Some details about {project_name}: ")
         project_table = DB.search('project')
@@ -220,6 +262,10 @@ class Application:
         self.clear_screen()
 
     def Invite_member(self):
+        '''
+        Let student invite other student using their id to their project
+        :return: Nothing
+        '''
         all_project = self.get_projects()
 
         if len(all_project) == 0:
@@ -267,6 +313,10 @@ class Application:
         return
 
     def Accept_invitation(self):
+        '''
+        Let student accept invitation to join another project
+        :return: Nothing
+        '''
         project_invite = [project for project in DB.search('project').table
                           if project.invite1 == self.__id or project.invite2 == self.__id]
 
@@ -317,6 +367,10 @@ class Application:
         return
 
     def Remove_member(self):
+        '''
+        Let user remove the member of the project
+        :return: Nothing
+        '''
         all_project = self.get_projects()
 
         if len(all_project) == 0:
@@ -333,6 +387,13 @@ class Application:
         project = all_project[response]
         self.clear_screen()
 
+        if all([i=='' for i in [project.member1, project.member2]]):
+            print("There is no member in this project.")
+            input('\nPress enter.')
+            self.clear_screen()
+            return
+
+        member = [project.member1, project.member2]
         print("Member list: ")
         print(f"1. {project.member1}")
         print(f"2. {project.member2}")
@@ -344,8 +405,14 @@ class Application:
             project.member2 = ''
 
         print("Removed member successfully")
+        input('\nPress enter.')
+        self.clear_screen()
 
     def Edit_project(self):
+        '''
+        Lets user edit project that they are a part of. (Being a member or a lead student)
+        :return: Nothing
+        '''
         all_project = self.get_projects() + [project for project in DB.search('project').table
                                          if project.member1 == self.__id or project.member2 == self.__id]
 
@@ -390,14 +457,29 @@ class Application:
                 continue
 
     def get_projects(self):
+        '''
+        Give all the project that the student owns
+        :return: list of Project objects
+        '''
         project = [_project for _project in DB.search('project').table
                    if _project.lead_student == self.__id]
         return project
 
     def check_id(self,id):
+        '''
+        Check if the id is valid
+        :param id: id to check
+        :return: True if it is in persons.csv else False
+        '''
         return any([id == ID['ID'] for ID in DB.search('person').select(['ID']).table])
 
     def take_input(self,text, valid):
+        '''
+        This is so badly written
+        :param text: text to ask user for input
+        :param valid: function to check if the input is valid
+        :return: valid input
+        '''
         while True:
             response = input(text)
             if valid(response):
@@ -406,6 +488,11 @@ class Application:
                 print("Invalid response")
 
     def fit_text_to_screen(self,txt):
+        '''
+        turn word spaghetti into string that cut to new line every 10 word
+        :param txt: txt to convert
+        :return: string that cut to new line every 10 word
+        '''
         txt = txt.split()
         new_txt = ''
         while len(txt) != 0:
@@ -419,11 +506,19 @@ class Application:
         return new_txt
 
     def See_all_project_detail(self):
+        '''
+        Self explainatory
+        :return: Nothing
+        '''
         all_project = DB.search('project')
         print(all_project)
         _continue = input('Press enter :')
 
     def Send_advisor_req(self):
+        '''
+        Send out request to an advisor using their id
+        :return: Nothing
+        '''
         all_project = self.get_projects()
 
         if len(all_project) == 0:
@@ -446,7 +541,7 @@ class Application:
             response = self.take_input("Do you want to overwrite the previous invite? (Y/N): ",
                                        lambda x: x in ['Y','N'])
             if response == 'Y':
-                id = self.take_input("Advisor's ID : ", self.check_id)
+                id = self.take_input("Advisor's ID : ", self.check_advisor_id)
                 project.invite_advisor = id
                 input('\nPress enter.')
                 self.clear_screen()
@@ -626,6 +721,12 @@ class Application:
                 input('\nPress enter.')
                 self.clear_screen()
                 return True
+
+    def check_advisor_id(self, id):
+        all_person = DB.search('person').table
+        for person in all_person:
+            if person['ID'] == id:
+                return person['type'] == 'faculty'
 
 
 # define a function called initializing

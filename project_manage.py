@@ -259,10 +259,21 @@ class Application:
 
     def Create_Project(self):
         '''
-        Let student create their project
+        Let student create their projectw
         :return: Nothing
         '''
-        project_name = input("Project name: ")
+        while True:
+            project_name = input("Project name (Enter 'Q' to quit): ")
+            if project_name == 'Q':
+                return
+            if project_name in [proj.name for proj in DB.search('project').table]:
+                print('There already is a project with this name.\n'
+                      'Please use another name')
+                input('\nPress enter.')
+                self.clear_screen()
+                continue
+            break
+
         project_details = input(f"Some details about {project_name}: ")
         project_table = DB.search('project')
         project = Project(project_name, self.__id)

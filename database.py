@@ -37,6 +37,7 @@ class Project:
         return new_txt
 
     def __str__(self):
+        vote = [vote.split()[1] for vote in self.vote_status.split(':')[1:]]
         return (f"Project name : {self.name}\n"
                 f"Project Details : \n{self.__fit_text_to_screen(self.project_details)}\n"
                 f"Lead student : {self.lead_student}\n"
@@ -45,8 +46,8 @@ class Project:
                 f"Advisor : {self.advisor}\n"
                 f"Status : {self.status}\n"
                 f"Vote Status : "
-                f"{list(self.vote_status).count('1')} Approves, "
-                f"{list(self.vote_status).count('0')} Disapproves\n")
+                f"{vote.count('1')} Approves, "
+                f"{vote.count('0')} Disapproves\n")
 
 
 # add in code for a Database class

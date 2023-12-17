@@ -90,12 +90,13 @@ class Application:
         :return: Nothing
         '''
         menu_choice = (f"1. Create a project\n"
-                       f"2. Invite member to project\n"
-                       f"3. Remove member from project\n"
-                       f"4. Edit project\n"
-                       f"5. Send advisor request\n"
-                       f"6. Submit project\n"
-                       f"7. Accept project invitation\n"
+                       f"2. See project detail\n"
+                       f"3. Invite member to project\n"
+                       f"4. Remove member from project\n"
+                       f"5. Edit project\n"
+                       f"6. Send advisor request\n"
+                       f"7. Submit project\n"
+                       f"8. Accept project invitation\n"
                        f"Q. Logout\n")
         while True:
             self.Show_Menu(menu_choice)
@@ -103,16 +104,18 @@ class Application:
             if response == '1':
                 self.Create_Project()
             elif response == '2':
-                self.Invite_member()
+                self.See_project_detail()
             elif response == '3':
-                self.Remove_member()
+                self.Invite_member()
             elif response == '4':
-                self.Edit_project()
+                self.Remove_member()
             elif response == '5':
-                self.Send_advisor_req()
+                self.Edit_project()
             elif response == '6':
-                self.Send_eval_req()
+                self.Send_advisor_req()
             elif response == '7':
+                self.Send_eval_req()
+            elif response == '8':
                 self.Accept_invitation()
             elif response == 'Q':
                 exit()
@@ -722,8 +725,8 @@ class Application:
                 self.check_project_eval(project)
                 return
             elif vote == 'N':
-                project.status = 'Declined'
-                project.vote_status = ''
+                project.vote_status += f':{self.__id} 0 '
+                self.check_project_eval(project)
                 return
 
     def check_project_eval(self, project):
@@ -733,12 +736,15 @@ class Application:
         :return: Nothing
         '''
         all_faculty_num = len([fac for fac in DB.search('person').table if fac['type'] == 'faculty'])
+        vote = [vote.split()[1] for vote in project.vote_status.split(':')[1:]]
 
-        if project.vote_status.split(',') != all_faculty_num:
+        if len(project.vote_status.split(':')[1:]) != all_faculty_num:
             return
-
-        project.status = 'Approved'
-        project.vote_status = ''
+        elif vote.count('1') > vote.count('0'):
+            project.status = 'Approved'
+        else:
+            project.status = 'Declined'
+            project.vote_status = ''
 
     def check_voted(self, project):
         '''
@@ -761,6 +767,38 @@ class Application:
         for person in all_person:
             if person['ID'] == id:
                 return person['type'] == 'faculty'
+
+    def See_project_detail(self):
+        all_project = self.get_projects()
+
+        if len(all_project) == 0:
+            print("You don't have any projects yet.")
+            input('\nPress enter.')
+            self.clear_screen()
+            return
+
+        for index, _project in enumerate(all_project):
+            print(f"{index + 1}. {_project.name}")
+        print("(Enter 'Q' to quit)")
+
+        while True:
+            response = input("See which project's details? (Enter 'Q' to quit) : ")
+            if response == 'Q':
+                return
+
+            check = lambda x: int(x) - 1 in range(len(all_project))
+            if check(response):
+                response = int(response) - 1
+                break
+            else:
+                print("Invalid input.")
+                input('\nPress enter.')
+                self.clear_screen()
+
+        project = all_project[response]
+
+        print(project)
+        input('\nPress enter.')
 
 
 # define a function called initializing

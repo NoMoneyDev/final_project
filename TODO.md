@@ -5,15 +5,22 @@
 ---
 ### **Lead Student**
 - [x] Create a project
-  - _csv_ **Project** :
+  - _class_ **Project** :
+    - _project_id_
     - _project name_
+    - _project details_
     - _lead student_
     - _member1_
     - _member2_
+    - _advisor_
     - _status : (Approved / Declined / Waiting)_
     - _vote_status_ : (e.g. '123456 1: 456789 0' ; 
       means faculty "123456" voted _approves_, faculty "456789" voted _not approves_)
-    - _project details_
+    - _invite1_ 
+    - _invite2_
+    - _invite_advisor_
+    - for all invite '123456:2023-12-17' means student '123456' was invited on 2023-12-17
+    
     
 - [x] Find _members_
   - Send invitation message to **Member's student** id

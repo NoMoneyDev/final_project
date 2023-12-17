@@ -1,7 +1,9 @@
 # import database module
 from database import *
+from datetime import date
 import random
 import sys
+
 
 __location__ = os.path.realpath(
     os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -314,24 +316,25 @@ class Application:
             else:
                 print("Invalid ID\n")
 
-        project = DB.search('project').filter(lambda proj: proj == project).table[0]
+        inv_str = f"{id}:{str(date.today())}"
+
         if project.invite1 == '':
-            project.invite1 = id
+            project.invite1 = inv_str
         elif project.invite2 == '':
-            project.invite2 = id
+            project.invite2 = inv_str
         else:
             print('You can only invite 2 students at a time.')
             response = self.take_input('Do you want to replace this student with another? (Y/N): ',
                                        lambda x: x in ['Y','N'])
             if response == 'Y':
-                print(f"1. {project.invite1}\n"
-                      f"2. {project.invite2}")
+                print(f"1. {project.invite1.split(':')[0]}\n"
+                      f"2. {project.invite2.split(':')[0]}\n")
                 response = self.take_input('Which student would you like the new student to replace with: ',
                                 lambda x: int(x) in [1,2])
                 if response == 1:
-                    project.invite1 = id
+                    project.invite1 = inv_str
                 elif response == 2:
-                    project.invite2 = id
+                    project.invite2 = inv_str
             elif response == 'N':
                 print("No invitation sent")
                 input('\nPress enter.')
@@ -348,7 +351,7 @@ class Application:
         :return: Nothing
         '''
         project_invite = [project for project in DB.search('project').table
-                          if project.invite1 == self.__id or project.invite2 == self.__id]
+                          if project.invite1.split(':')[0] == self.__id or project.invite2.split(':')[0] == self.__id]
 
         if len(project_invite) == 0:
             print("You don't have any invitations yet.")
@@ -364,15 +367,19 @@ class Application:
             response = input("Which project invitation do you want to accept? : ")
             if response == 'Q':
                 return
-            check = lambda x: int(x)-1 in range(len(project_invite))
-            response = int(response) - 1
-            project = project_invite[response]
 
-            if check(response):
+            check = lambda x: int(x) - 1 in range(len(project_invite))
+            if not check(response):
                 print("Invalid response")
                 print()
                 continue
-            elif project.member1 == '':
+
+
+            response = int(response) - 1
+            project = project_invite[response]
+
+
+            if project.member1 == '':
                 project.member1 = self.__id
                 if project.invite1 == self.__id:
                     project.invite1 = ''
@@ -388,12 +395,14 @@ class Application:
                 break
             else:
                 print("Project is already full.")
-                if project.invite1 == self.__id:
-                    project.invite1 = ''
-                elif project.invite2 == self.__id:
-                    project.invite2 = ''
+                input('\nPress enter.')
+                project.invite1 = ''
+                project.invite2 = ''
+                return
 
         print("Invitation accepted")
+        input('\nPress enter.')
+        self.clear_screen()
         return
 
     def Remove_member(self):
@@ -486,7 +495,7 @@ class Application:
                     project.project_details = new_project_detail
                     return
                 elif confirm == 'N':
-                    break
+                    return
                 elif confirm == 'Q':
                     return
 
@@ -563,8 +572,22 @@ class Application:
 
         for index,project in enumerate(all_project):
             print(f"{index+1}. {project.name}")
-        response = int(self.take_input("Which project do you want to send advisor request from : ",
-                                   lambda x: int(x)-1 in range(len(all_project))))-1
+
+        while True:
+            response = input("Which project do you want to send advisor request from (Enter 'Q' to quit) : ")
+            if response == 'Q':
+                return
+            check = lambda x: int(x) - 1 in range(len(all_project))
+            if check(response):
+                response = int(response) - 1
+                break
+            else:
+                print("Invalid input.")
+                input('\nPress enter.')
+                self.clear_screen()
+
+        project = all_project[response]
+
         project = all_project[response]
         if project.advisor != '':
             print("You already have an advisor.")
@@ -575,17 +598,17 @@ class Application:
             response = self.take_input("Do you want to overwrite the previous invite? (Y/N): ",
                                        lambda x: x in ['Y','N'])
             if response == 'Y':
-                id = self.take_input("Advisor's ID : ", self.check_advisor_id)
-                project.invite_advisor = id
-                print("Advisor request sent.")
-                input('\nPress enter.')
-                self.clear_screen()
-                return
+                True
             elif response == 'N':
                 return
 
-        id = self.take_input("Advisor's ID : ", self.check_id)
-        project.invite_advisor = id
+        id = self.take_input("Advisor's ID : ", self.check_advisor_id)
+
+        inv_str = f"{id}:{str(date.today())}"
+
+        project.invite_advisor = inv_str
+
+        print("\nAdvisor invite sent successfully.")
         input('\nPress enter.')
         self.clear_screen()
 
@@ -767,9 +790,11 @@ class Application:
         for person in all_person:
             if person['ID'] == id:
                 return person['type'] == 'faculty'
+        return False
 
     def See_project_detail(self):
-        all_project = self.get_projects()
+        all_project = self.get_projects() + [project for project in DB.search('project').table
+                                         if project.member1 == self.__id or project.member2 == self.__id]
 
         if len(all_project) == 0:
             print("You don't have any projects yet.")
@@ -785,6 +810,8 @@ class Application:
             response = input("See which project's details? (Enter 'Q' to quit) : ")
             if response == 'Q':
                 return
+
+            self.clear_screen()
 
             check = lambda x: int(x) - 1 in range(len(all_project))
             if check(response):
@@ -829,6 +856,7 @@ def initializing():
     project = []
     for _project in project_data:
         load_project = Project(_project['project_name'], _project['lead_student'])
+        load_project.id = _project['project_id']
         load_project.project_details = _project['project_details']
         load_project.member1 = _project['member1']
         load_project.member2 = _project['member2']
@@ -875,7 +903,7 @@ def exit():
 
     project = open('projects.csv', 'w')
     project_writer = csv.writer(project)
-    project_writer.writerow(['project_name','project_details','lead_student','member1','member2',
+    project_writer.writerow(['project_id','project_name','project_details','lead_student','member1','member2',
                              'advisor','status','vote_status','invite1','invite2','invite_advisor'])
     for _project in DB.search('project').table:
         project_writer.writerow(_project.save())

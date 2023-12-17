@@ -1,1 +1,4 @@
-project_name,project_details,lead_student,member1,member2,advisor,status,vote_status,invite1,invite2,invite_advisor
+project_id,project_name,project_details,lead_student,member1,member2,advisor,status,vote_status,invite1,invite2,invite_advisor
+619427,banana,Banananananana,123,8382345,7998314,2472659,Waiting,:8347432 1 :4720327 1 ,,,2472659:2023-12-17
+740348,Pineapple,,123,5086282,,,Declined,,5086282:2023-12-17,,
+852610,Orange,"very year, we manage the technology used to coordinate more than 5,000 events in France and abroad through various solutions involving networks, live streaming, connectivity, and more. Our experts support major sporting events inclu",123,,,,Waiting,,,,

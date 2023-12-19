@@ -1,5 +1,6 @@
 # Final project for 2023's 219114/115 Programming I
 
+# List of Files
 persons.csv : the file that contains everyone's id, names, and their types
 - id (ID number of the person)
 - first (First name of the person)
@@ -36,7 +37,7 @@ database.py : the file that contains almost all the class
 # How to compile and run project
 1. Clone this repository in to your local repository
 2. Change the persons.csv and login.csv to your data pool
-3. Thats it! (Optional: if you have data for your student's projects too, then you can put them in projects.csv file)
+3. Run the project_manage.py and Thats it! (Optional: if you have data for your student's projects too, then you can put them in projects.csv file)
 
 
   
